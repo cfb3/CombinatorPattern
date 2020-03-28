@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Combinator Pattern</string>
+
+    <string name="button_register">Register</string>
+    <string name="edit_hint_password">Password</string>
+
+</resources>

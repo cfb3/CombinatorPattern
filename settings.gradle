@@ -1,0 +1,2 @@
+rootProject.name='Combinator Pattern'
+include ':app'
