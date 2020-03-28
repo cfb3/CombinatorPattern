@@ -27,9 +27,7 @@ public interface PasswordValidator
      * @return a validator that validates the length of the String as > 6
      */
     static PasswordValidator checkPwdLength() {
-        return password ->
-                Optional.of(password.length() > 6 ?
-                        SUCCESS : PWD_INVALID_LENGTH);
+        return checkPwdLength(6);
     }
 
     /**
@@ -108,10 +106,7 @@ public interface PasswordValidator
      * @return a validator that validates that the String contains a special character
      */
     static PasswordValidator checkPwdSpecialChar() {
-        return password ->
-                Optional.of(checkStringContains(password,
-                                c -> "@#$%&*!?".contains(Character.toString((char) c))) ?
-                                SUCCESS : PWD_MISSING_SPECIAL);
+        return checkPwdSpecialChar("@#$%&*!?");
     }
 
     /**
@@ -211,18 +206,18 @@ public interface PasswordValidator
      *      this PasswordValidator and another
      */
     default PasswordValidator and (PasswordValidator other) {
-        return editText -> this.apply(editText)
+        return password -> this.apply(password)
                 .flatMap(result -> result == SUCCESS ?
-                        other.apply(editText) : Optional.of(result));
+                        other.apply(password) : Optional.of(result));
 
         /*
          * NOTE: If you have access to Java 1.9 (Which AS still doesn't support) you can simplify
          * the above return statement to below. The or method was introduced to the Optional
          * class in Java 1.9.
          */
-//        return editText -> this.apply(editText)
+//        return password -> this.apply(password)
 //                .filter(result -> result != SUCCESS)
-//                .or(() -> other.apply(editText));
+//                .or(() -> other.apply(password));
 
     }
 
