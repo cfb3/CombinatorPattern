@@ -203,6 +203,8 @@ public interface PasswordValidator
      * if this PasswordValidator in not successful, then the other PasswordValidator is not
      * evaluated.
      *
+     * NOTE: THIS is the Combinator!
+     *
      * @param other a PasswordValidator that will be logically-ANDed with this
      *      PasswordValidator
      * @return a composed PasswordValidator that represents a short-circuiting logical AND of
