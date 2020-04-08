@@ -1,9 +1,9 @@
 package edu.uw.tcss450.combinatorpattern.util;
 
 import static edu.uw.tcss450.combinatorpattern.util.PasswordValidator.ValidationResult;
-import static edu.uw.tcss450.combinatorpattern.util.PasswordValidator.ValidationResult.*;
 
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.IntPredicate;
 import java.util.function.Predicate;
@@ -44,7 +44,7 @@ public interface PasswordValidator
     static PasswordValidator checkPwdLength(int length) {
         return password ->
                 Optional.of(password.length() > length ?
-                        SUCCESS : PWD_INVALID_LENGTH);
+                        ValidationResult.SUCCESS : ValidationResult.PWD_INVALID_LENGTH);
     }
 
     /**
@@ -60,7 +60,7 @@ public interface PasswordValidator
     static PasswordValidator checkPwdDigit() {
         return password ->
                 Optional.of(checkStringContains(password, Character::isDigit) ?
-                        SUCCESS : PWD_MISSING_DIGIT);
+                        ValidationResult.SUCCESS : ValidationResult.PWD_MISSING_DIGIT);
     }
 
     /**
@@ -76,7 +76,7 @@ public interface PasswordValidator
     static PasswordValidator checkPwdUpperCase() {
         return password ->
                 Optional.of(checkStringContains(password, Character::isUpperCase) ?
-                        SUCCESS : PWD_MISSING_UPPER);
+                        ValidationResult.SUCCESS : ValidationResult.PWD_MISSING_UPPER);
     }
 
     /**
@@ -92,7 +92,7 @@ public interface PasswordValidator
     static PasswordValidator checkPwdLowerCase() {
         return password ->
                 Optional.of(checkStringContains(password, Character::isLowerCase) ?
-                        SUCCESS : PWD_MISSING_LOWER);
+                        ValidationResult.SUCCESS : ValidationResult.PWD_MISSING_LOWER);
     }
 
     /**
@@ -123,8 +123,8 @@ public interface PasswordValidator
     static PasswordValidator checkPwdSpecialChar(String specialChars) {
         return password ->
                 Optional.of(checkStringContains(password,
-                                c -> specialChars.contains(Character.toString((char) c))) ?
-                                SUCCESS : PWD_MISSING_SPECIAL);
+                        c -> specialChars.contains(Character.toString((char) c))) ?
+                        ValidationResult.SUCCESS : ValidationResult.PWD_MISSING_SPECIAL);
     }
 
     /**
@@ -143,7 +143,7 @@ public interface PasswordValidator
         return password ->
                 Optional.of(!checkStringContains(password, //NOTE the !
                         c -> excludeChars.contains(Character.toString((char) c))) ?
-                        SUCCESS : PWD_INCLUDES_EXCLUDED);
+                        ValidationResult.SUCCESS : ValidationResult.PWD_INCLUDES_EXCLUDED);
     }
 
     /**
@@ -160,7 +160,7 @@ public interface PasswordValidator
         return password ->
                 Optional.of(!checkStringContains(password, //NOTE the !
                         Character::isWhitespace) ?
-                        SUCCESS : PWD_INCLUDES_WHITESPACE);
+                        ValidationResult.SUCCESS : ValidationResult.PWD_INCLUDES_WHITESPACE);
     }
 
     /**
@@ -176,7 +176,7 @@ public interface PasswordValidator
     static PasswordValidator checkClientPredicate(Predicate<String> theTest) {
         return password ->
                 Optional.of(theTest.test(password) ?
-                        SUCCESS : PWD_CLIENT_ERROR);
+                        ValidationResult.SUCCESS : ValidationResult.PWD_CLIENT_ERROR);
     }
 
     /**
@@ -205,9 +205,9 @@ public interface PasswordValidator
      * @return a composed PasswordValidator that represents a short-circuiting logical AND of
      *      this PasswordValidator and another
      */
-    default PasswordValidator and (PasswordValidator other) {
+    default PasswordValidator and(PasswordValidator other) {
         return password -> this.apply(password)
-                .flatMap(result -> result == SUCCESS ?
+                .flatMap(result -> result == ValidationResult.SUCCESS ?
                         other.apply(password) : Optional.of(result));
 
         /*
@@ -218,7 +218,47 @@ public interface PasswordValidator
 //        return password -> this.apply(password)
 //                .filter(result -> result != SUCCESS)
 //                .or(() -> other.apply(password));
+    }
 
+    /**
+     * Returns a composed PasswordValidator that represents a short-circuiting logical OR of
+     * this PasswordValidator and another.  When evaluating the composed PasswordValidator,
+     * if this PasswordValidator is successful, then the other PasswordValidator is not
+     * evaluated.
+     *
+     * NOTE: THIS is the Combinator!
+     *
+     * @param other a PasswordValidator that will be logically-ORed with this
+     *      PasswordValidator
+     * @return a composed PasswordValidator that represents a short-circuiting logical OR of
+     *      this PasswordValidator and another
+     */
+    default PasswordValidator or(PasswordValidator other) {
+        return password -> this.apply(password)
+                .flatMap(result -> result == ValidationResult.SUCCESS ?
+                        Optional.of(result): other.apply(password));
+    }
+
+    /**
+     * This helper method is a work around used since Android does not support java language
+     * features introduced after Java 1.8. The Optional class introduced several helpful methods
+     * in Java 1.9 that should be used here instead of this.
+     * @param result the result of a validation action
+     * @param onSuccess the action to take when the password successfully validates
+     * @param onError the action to take when the password unsuccessfully validates
+     */
+    default void processResult(Optional<ValidationResult> result,
+                               Runnable onSuccess,
+                               Consumer<ValidationResult> onError) {
+        if (result.isPresent()) {
+            if (result.get() == ValidationResult.SUCCESS) {
+                onSuccess.run();
+            } else {
+                onError.accept(result.get());
+            }
+        } else {
+            throw new IllegalStateException("Nothing to process");
+        }
     }
 
     /**

@@ -18,6 +18,7 @@ public class MainActivity extends AppCompatActivity {
 
     private ActivityMainBinding mBinding;
     private PasswordValidator mValidator = checkPwdLength(4)
+            .and(checkPwdLowerCase().or(checkPwdUpperCase())) //Use of the OR looks for ANY letter
             .and(checkPwdDigit())
             .and(checkPwdSpecialChar())
             .and(checkExcludeWhiteSpace())
