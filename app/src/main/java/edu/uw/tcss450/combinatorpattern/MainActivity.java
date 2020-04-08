@@ -35,11 +35,11 @@ public class MainActivity extends AppCompatActivity {
 
     public void onCLick(View theCLickedButton) {
         String username = "abc";
-        validate(mValidator
+        mValidator.processResult(mValidator
                 .apply(mBinding.editPassword.getText().toString())
                 .filter(result -> result != ValidationResult.SUCCESS),
-                this::handleRegisterError,
-                this::register);
+                this::register,
+                this::handleRegisterError);
 
         /*
          * NOTE: If you have access to Java 1.9 (Which AS still doesn't support) you can simplify
@@ -57,21 +57,6 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    /**
-     * This helper method is a work around used since Android does not support java language
-     * features introduced after Java 1.8. The Optional class introduced several helpful methods
-     * in Java 1.9 that should be used here instead of this.
-     * @param result
-     */
-    private void validate(Optional<ValidationResult> result,
-                          Consumer<ValidationResult> onError,
-                          Runnable onSuccess) {
-        if (result.isPresent()) {
-            onError.accept(result.get());
-        } else {
-            onSuccess.run();
-        }
-    }
 
     private void handleRegisterError(ValidationResult result) {
         mBinding.editPassword.setError(result.name());
@@ -101,11 +86,11 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void afterTextChanged(Editable s) {
-                validate(mValidator
+                mValidator.processResult(mValidator
                                 .apply(mBinding.editPassword.getText().toString())
                                 .filter(result -> result != ValidationResult.SUCCESS),
-                        this::handleRegisterError,
-                        this::handleSuccess);
+                        this::handleSuccess,
+                        this::handleRegisterError);
             }
 
             /**
